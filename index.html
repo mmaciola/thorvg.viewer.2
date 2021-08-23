@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8" />
+	<meta name="description" content="Viewer application for Thor Vector Graphics platform-independent portable drawing library">
+	<meta name="author" content="Michal Maciola">
+	<link rel="stylesheet"  href="style.css">
+	<link rel="icon" type="image/svg+xml" href="favicon.svg">
+	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+	<title>ThorVG Viewer | Thor Vector Graphics</title>
+</head>
+<body>
+	<section id="drop-area">
+		<canvas id="image-canvas" width="512" height="512" class="hidden"></canvas>
+		<div id="image-placeholder">Drop an image here or click to browse<br/>Supported formats are .tvg, .svg, .jpg, .png<br/><small>ThorVG Loader works locally. File(s) won't be uploaded to the internet.</small></div>
+		<input id="image-file-selector" type="file" accept=".tvg,.svg,.jpg,.png">
+	</section>
+	<aside class="hidden">
+		<nav>
+			<a id="nav-toggle-aside">
+				<i class="fa fa-bars"></i>
+			</a>
+			<hr />
+			<a id="nav-layers" class="active">
+				<i class="fa fa-folder-o"></i>
+			</a>
+			<a id="nav-properties">
+				<i class="fa fa-pencil-square-o"></i>
+			</a>
+			<hr />
+			<a id="nav-file">
+				<i class="fa fa-file-text-o"></i>
+			</a>
+			<div class="bottom-nav">
+				<label id="nav-dark-mode" class="toggle">
+					<input type="checkbox">
+					<span></span>
+				</label>
+			</div>
+		</nav>
+		<div>
+			<div id="aside-top">
+				<div id="zoom-slider-container">
+					<input id="zoom-slider" type="range" min="0" max="200" value="75" disabled />
+				</div>
+				<div id="zoom-value">512 x 512</div>
+			</div>
+			<div id="layers" class="tab active">
+				<div class="placeholder">Load image first<br/><small>This is a layers tab. After loading an image file, there you can browse its elements.</small></div>
+			</div>
+			<div id="properties" class="tab">
+				<div class="placeholder">Load image first<br/><small>This is a properties tab. After selecting a paint from the layers list, there you can change its properties like visibility or composite method.</small></div>
+			</div>
+			<div id="file" class="tab">
+				<div class="placeholder">Load image first<br/><small>This is a file tab. There you can find informations about the loaded file and export functionallity.</small></div>
+			</div>
+		</div>
+	</aside>
+	<script type="text/javascript" src="main.js"></script>
+</body>
+</html>
