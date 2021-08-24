@@ -24,6 +24,8 @@ class Player {
 		if (clampedBuffer.length == 0) return false;
 		
 		var imageData = new ImageData(clampedBuffer, this.canvas.width, this.canvas.height);
+		this.imageData = imageData;
+		
 		var context = this.canvas.getContext('2d');
 		context.putImageData(imageData, 0, 0);
 		
@@ -74,6 +76,7 @@ class Player {
 		var parent = layers;
 		var parentDepth = 0;
 		for (let i = 0; i < layersMem.length; i += 4) {
+			let id = layersMem[i];
 			let depth = layersMem[i + 1];
 			let type = layersMem[i + 2];
 			let compositeMethod = layersMem[i + 3];
@@ -84,7 +87,7 @@ class Player {
 				if (parent.getAttribute('tvg-depth') > depth)
 					parent = parent.parentNode;
 			}
-			parent.appendChild(layerCreate(depth, type, compositeMethod));
+			parent.appendChild(layerCreate(id, depth, type, compositeMethod));
 			parentDepth = depth;
 		}
 		
@@ -116,8 +119,9 @@ class Player {
 	}
 	
 	saveTvg() {
-		if (this.thorvg.saveTvg()) {
-			var data = new Uint8Array(HEAPU8.buffer, this.thorvg.saveGetData(), this.thorvg.saveGetLength());
+		var buffer = this.thorvg.saveTvg();
+		var data = Uint8Array.from(buffer);
+		if (data.length != 0) {
 			var blob = new Blob([data], {type: 'application/octet-stream'});
 			
 			var link = document.createElement("a");
@@ -131,6 +135,24 @@ class Player {
 		} else {
 			alert("Couldn't save canvas. Error message: " + this.thorvg.getError());
 		}
+	}
+	
+	highlightLayer(paintId) {
+		var bounds = Float32Array.from(this.thorvg.bounds(paintId));
+		if (bounds.length != 4) return;
+		
+		var context = this.canvas.getContext('2d');
+		context.putImageData(this.imageData, 0, 0);
+		context.fillStyle = "#5a8be466";
+		context.fillRect(bounds[0], bounds[1], bounds[2], bounds[3]);
+		//context.lineWidth = 4;
+		//context.strokeStyle = "#5a8be4aa";
+		//context.strokeRect(bounds[0], bounds[1], bounds[2], bounds[3]);
+	}
+	
+	rerender() {
+		var context = this.canvas.getContext('2d');
+		context.putImageData(this.imageData, 0, 0);
 	}
 	
 	constructor() {
@@ -290,9 +312,10 @@ function layerBlockCreate(depth) {
 	return block;
 }
 
-function layerCreate(depth, type, compositeMethod) {
+function layerCreate(id, depth, type, compositeMethod) {
 	var layer = document.createElement("div");
 	layer.setAttribute('class', 'layer');
+	layer.setAttribute('tvg-id', id);
 	layer.style.paddingLeft = Math.min(64 + 16 * depth, 160) + "px";
 
 	if (type == Types.Scene) {
@@ -322,6 +345,8 @@ function layerCreate(depth, type, compositeMethod) {
 		name.innerHTML += " <small>(" + CompositeMethodNames[compositeMethod] + ")</small>";
 	}
 	
+	layer.addEventListener("mouseenter", highlightLayer, false);
+	layer.addEventListener("mouseleave", unhighlightLayer, false);
 	layer.addEventListener("dblclick", showLayerProperties, false);
 	
 	return layer;
@@ -399,6 +424,17 @@ function exportCanvasToPng() {
 		document.body.removeChild(link);
 	}, 'image/png');
 }
+
+function highlightLayer(event) {
+	var paintId = parseInt(this.getAttribute('tvg-id'));
+	player.highlightLayer(paintId);
+	
+}
+function unhighlightLayer(event) {
+	player.rerender(); // TODO; dont rerender if will do highlightLayer
+}
+
+
 
 function mockupTabs() {
 	//clear placeholders
