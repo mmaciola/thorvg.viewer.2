@@ -33,24 +33,16 @@ class Player {
 		return true;
 	}
 	
-	load(data) {
-		//var arr = new Int8Array(data);
-		//var buffer = Module._malloc(arr.length);
-		//Module.writeArrayToMemory(arr, buffer);
-		//return this.thorvg.load(buffer, arr.length, this.canvas.width, this.canvas.height);
-		
-		//Module.ccall('mxdepo', 'string', ['number', 'number', 'number', 'number'], args);
-		
-		//console.log(data);
-		//return this.thorvg.load(new Int8Array(data), data.byteLength, this.canvas.width, this.canvas.height);
-		return this.thorvg.load(new Int8Array(data), this.canvas.width, this.canvas.height);
+	load(data, name) {
+		var ext = name.split('.').pop();
+		return this.thorvg.load(new Int8Array(data), ext, this.canvas.width, this.canvas.height);
 	}
 	
 	loadFile(file) {
 		var read = new FileReader();
 		read.readAsArrayBuffer(file);
 		read.onloadend = _ => {
-			if (!this.load(read.result) || !this.render()) {
+			if (!this.load(read.result, file.name) || !this.render()) {
 				alert("Couldn't load an image. Error message: " + this.thorvg.getError());
 				return;
 			}
@@ -120,13 +112,15 @@ class Player {
 	
 	saveTvg() {
 		var buffer = this.thorvg.saveTvg();
-		var data = Uint8Array.from(buffer);
+		console.log(FS.readFile('file.tvg', { encoding: 'utf8' }));
+		
+		/*var data = Uint8Array.from(buffer);
 		if (data.length != 0) {
 			var blob = new Blob([data], {type: 'application/octet-stream'});
 			
 			var link = document.createElement("a");
 			link.setAttribute('href', URL.createObjectURL(blob));
-			link.setAttribute('download', 'canvas.tvg');
+			link.setAttribute('download', changeExtension(player.filename, "tvg"));
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
@@ -134,7 +128,7 @@ class Player {
 			this.thorvg.saveFree();
 		} else {
 			alert("Couldn't save canvas. Error message: " + this.thorvg.getError());
-		}
+		}*/
 	}
 	
 	highlightLayer(paintId) {
@@ -180,7 +174,7 @@ function initialize() {
 }
 
 //file upload
-function allowedFileExtention(filename) {
+function allowedFileExtension(filename) {
 	var ext = filename.split('.').pop();
 	return (ext === "tvg") || (ext === "svg") || (ext === "jpg") || (ext === "png");
 }
@@ -197,7 +191,7 @@ function fileDropHighlight(event) {
 }
 function fileDropOrBrowseHandle(event) {
 	var files = this.files || event.dataTransfer.files;
-	if (files.length != 1 || !allowedFileExtention(files[0].name)) {
+	if (files.length != 1 || !allowedFileExtension(files[0].name)) {
 		alert("Please drag and drop a single file of supported format.");
 		return false;
 	}
@@ -414,11 +408,16 @@ function exportCanvasToTvg() {
 	player.saveTvg();
 }
 
+function changeExtension(filename, extension) {
+	var s = filename.split('.').slice(0, -1);
+	s.push(extension);
+	return s.join('.');
+}
 function exportCanvasToPng() {
 	player.canvas.toBlob(function(blob){
 		var link = document.createElement("a");
 		link.setAttribute('href', URL.createObjectURL(blob));
-		link.setAttribute('download', 'canvas.png');
+		link.setAttribute('download', changeExtension(player.filename, "png"));
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
