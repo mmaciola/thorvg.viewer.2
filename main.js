@@ -141,6 +141,10 @@ class Player {
 		context.fillRect(bounds[0], bounds[1], bounds[2], bounds[3]);
 	}
 	
+	setPaintOpacity(paintId, opacity) {
+		this.thorvg.setOpacity(paintId, opacity);
+	}
+	
 	rerender() {
 		var context = this.canvas.getContext('2d');
 		context.putImageData(this.imageData, 0, 0);
@@ -286,10 +290,12 @@ function toggleSceneChilds() {
 }
 
 function togglePaintVisibility() {
+	var paintId = parseInt(this.parentElement.getAttribute('tvg-id'));
 	var icon = event.currentTarget.getElementsByTagName("i")[0];
 	var visible = icon.classList.contains("fa-square-o");
 	icon.classList.toggle("fa-square-o");
 	icon.classList.toggle("fa-minus-square-o");
+	player.setPaintOpacity(paintId, visible ? 0 : 255);
 }
 
 function showLayerProperties() {
