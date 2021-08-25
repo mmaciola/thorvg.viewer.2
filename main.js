@@ -111,11 +111,13 @@ class Player {
 	}
 	
 	saveTvg() {
-		var buffer = this.thorvg.saveTvg();
-		console.log(FS.readFile('file.tvg', { encoding: 'utf8' }));
-		
-		/*var data = Uint8Array.from(buffer);
-		if (data.length != 0) {
+		if (this.thorvg.saveTvg()) {
+			let data = FS.readFile('file.tvg');
+			if (data.length < 33) {
+				alert("Couldn't save canvas. Invalid size of the generated file.");
+				return;
+			}
+
 			var blob = new Blob([data], {type: 'application/octet-stream'});
 			
 			var link = document.createElement("a");
@@ -124,11 +126,9 @@ class Player {
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
-			
-			this.thorvg.saveFree();
 		} else {
 			alert("Couldn't save canvas. Error message: " + this.thorvg.getError());
-		}*/
+		}
 	}
 	
 	highlightLayer(paintId) {
@@ -139,9 +139,6 @@ class Player {
 		context.putImageData(this.imageData, 0, 0);
 		context.fillStyle = "#5a8be466";
 		context.fillRect(bounds[0], bounds[1], bounds[2], bounds[3]);
-		//context.lineWidth = 4;
-		//context.strokeStyle = "#5a8be4aa";
-		//context.strokeRect(bounds[0], bounds[1], bounds[2], bounds[3]);
 	}
 	
 	rerender() {
