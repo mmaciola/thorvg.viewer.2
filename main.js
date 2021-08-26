@@ -16,8 +16,8 @@ var player;
 })();
 
 class Player {
-	render() {
-		this.thorvg.update(this.canvas.width, this.canvas.height);
+	render(force) {
+		this.thorvg.update(this.canvas.width, this.canvas.height, force);
 		
 		var buffer = this.thorvg.render();
 		var clampedBuffer = Uint8ClampedArray.from(buffer);
@@ -42,7 +42,7 @@ class Player {
 		var read = new FileReader();
 		read.readAsArrayBuffer(file);
 		read.onloadend = _ => {
-			if (!this.load(read.result, file.name) || !this.render()) {
+			if (!this.load(read.result, file.name) || !this.render(true)) {
 				alert("Couldn't load an image. Error message: " + this.thorvg.getError());
 				return;
 			}
@@ -66,7 +66,7 @@ class Player {
 		var layers = document.getElementById("layers");
 		layers.textContent = '';
 		var parent = layers;
-		var parentDepth = 0;
+		var parentDepth = 1;
 		for (let i = 0; i < layersMem.length; i += 4) {
 			let id = layersMem[i];
 			let depth = layersMem[i + 1];
@@ -84,11 +84,7 @@ class Player {
 		}
 		
 		//preferences tab
-		var properties = document.getElementById("properties");
-		properties.textContent = '';
-		properties.appendChild(propertiesLayerCreate(Types.Scene, CompositeMethod.None, true));
-		properties.appendChild(propertiesLineCreate("Show on layers list"));
-		properties.appendChild(propertiesLineCreate("Show this paint only"));
+		propertiesTabCreate(layers.getElementsByClassName('layer')[0]);
 		
 		//file tab
 		var originalSize = Float32Array.from(this.thorvg.originalSize());
@@ -143,6 +139,7 @@ class Player {
 	
 	setPaintOpacity(paintId, opacity) {
 		this.thorvg.setOpacity(paintId, opacity);
+		this.render(true);
 	}
 	
 	rerender() {
@@ -260,11 +257,10 @@ function onZoomSliderSlide(event) {
 	if (!player) return;
 	var value = event.target.value;
 	
-	var size = Math.min(player.canvas.clientWidth, player.canvas.clientHeight);
-	size = 512 * (value / 100 + 0.25);
+	var size = 512 * (value / 100 + 0.25);
 	player.canvas.width = size;
 	player.canvas.height = size;
-	player.render();
+	player.render(false);
 }
 
 
@@ -290,16 +286,38 @@ function toggleSceneChilds() {
 }
 
 function togglePaintVisibility() {
-	var paintId = parseInt(this.parentElement.getAttribute('tvg-id'));
+	//todo: fix logic. visibility may be showed both in layers and preferences
+	for (var el = this.parentElement; el && !el.getAttribute('tvg-id'); el = el.parentElement);
+	var paintId = parseInt(el.getAttribute('tvg-id'));
 	var icon = event.currentTarget.getElementsByTagName("i")[0];
-	var visible = icon.classList.contains("fa-square-o");
+	var visible = !icon.classList.contains("fa-square-o");
 	icon.classList.toggle("fa-square-o");
 	icon.classList.toggle("fa-minus-square-o");
-	player.setPaintOpacity(paintId, visible ? 0 : 255);
+	this.parentElement.setAttribute('tvg-visible', visible);
+	player.setPaintOpacity(paintId, visible ? 255 : 0);
 }
 
-function showLayerProperties() {
+function showLayerProperties(event) {
+	var el = event.target;
+	for (; !el.classList.contains('layer'); el = el.parentNode) {
+		if (el.tagName === "A") return;
+	}
+	propertiesTabCreate(el);
 	showProperties();
+}
+
+function propertiesTabCreate(layer) {
+	var properties = document.getElementById("properties");
+	properties.textContent = '';
+	properties.setAttribute('tvg-id', layer.getAttribute('tvg-id'));
+	var type = layer.getAttribute('tvg-type') || 0;
+	var compositeMethod = layer.getAttribute('tvg-comp') || 0;
+	var visible = layer.getAttribute('tvg-visible') || true;
+	properties.appendChild(propertiesLayerCreate(type, compositeMethod, visible));
+	var lineShowOnLayers = propertiesLineCreate("Show on layers list");
+	lineShowOnLayers.addEventListener("click", showLayers, false); // TODO
+	properties.appendChild(lineShowOnLayers);
+	//properties.appendChild(propertiesLineCreate("Show this paint only"));
 }
 
 function layerBlockCreate(depth) {
@@ -313,7 +331,9 @@ function layerCreate(id, depth, type, compositeMethod) {
 	var layer = document.createElement("div");
 	layer.setAttribute('class', 'layer');
 	layer.setAttribute('tvg-id', id);
-	layer.style.paddingLeft = Math.min(64 + 16 * depth, 160) + "px";
+	layer.setAttribute('tvg-type', type);
+	layer.setAttribute('tvg-comp', compositeMethod);
+	layer.style.paddingLeft = Math.min(48 + 16 * depth, 160) + "px";
 
 	if (type == Types.Scene) {
 		var caret = document.createElement("a");
@@ -364,7 +384,7 @@ function propertiesLayerCreate(type, compositeMethod, visible) {
 	
 	var visibility = document.createElement("a");
 	visibility.setAttribute('class', 'visibility');
-	visibility.innerHTML = '<i class="fa ' + (visible?'fa-square-o':'fa-minus-square-o') + '"></i>';
+	visibility.innerHTML = '<i class="fa ' + ((visible===true)?'fa-square-o':'fa-minus-square-o') + '"></i>';
 	visibility.addEventListener("click", togglePaintVisibility, false);
 	layer.appendChild(visibility);
 	
