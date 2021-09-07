@@ -11,6 +11,7 @@ var player;
 	script.onload = _ => {
 		Module.onRuntimeInitialized = _ => {
 			player = new Player();
+			loadFromWindowURL();
 		};
 	};
 })();
@@ -38,16 +39,16 @@ class Player {
 		return this.thorvg.load(new Int8Array(data), ext, this.canvas.width, this.canvas.height);
 	}
 	
-	loadFile(file) {
+	loadFile(file, name) {
 		var read = new FileReader();
 		read.readAsArrayBuffer(file);
 		read.onloadend = _ => {
-			if (!this.load(read.result, file.name) || !this.render(true)) {
-				alert("Couldn't load an image. Error message: " + this.thorvg.getError());
+			if (!this.load(read.result, name) || !this.render(true)) {
+				alert("Couldn't load an image (" + name + "). Error message: " + this.thorvg.getError());
 				return;
 			}
 			
-			this.filename = file.name;
+			this.filename = name;
 			this.createTabs();
 			showImageCanvas();
 			enableZoomSlider();
@@ -194,7 +195,7 @@ function fileDropOrBrowseHandle(event) {
 		return false;
 	}
 	if (!player) return false;
-	player.loadFile(files[0]);
+	player.loadFile(files[0], files[0].name);
 	return false;
 }
 
@@ -261,6 +262,28 @@ function onZoomSliderSlide(event) {
 	player.canvas.width = size;
 	player.canvas.height = size;
 	player.render(false);
+}
+
+
+
+function loadFromWindowURL() {
+	const urlParams = new URLSearchParams(window.location.search);
+	const imageUrl = urlParams.get('s');
+	if (!imageUrl) return;
+	if (!allowedFileExtension(imageUrl)) {
+		alert("Applied a file of unsupported format.");
+		return;
+	}
+	
+	let request = new XMLHttpRequest();
+    request.open('GET', imageUrl, true);
+    request.responseType = 'blob';
+    request.onload = function() {
+		if (request.status === 200) {
+			player.loadFile(request.response, imageUrl.split('/').pop());
+		}
+    };
+    request.send();
 }
 
 
