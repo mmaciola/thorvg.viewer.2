@@ -14,5 +14,6 @@ Click to use [ThorVG Viewer 2](https://mmaciola.github.io/thorvg.viewer.2/) via 
 
 ## Tricks
 ### Loading image from outside source
-You can load a graphic from outside source by entering its link through the url parameter `s` (`?s=[link]`). Such url can be easily shared online. Example:
-https://mmaciola.github.io/thorvg.viewer.2/?s=https://raw.githubusercontent.com/Samsung/thorvg/master/src/examples/images/cartman.svg
+You can load a graphic from outside source by entering its link through the url parameter `s` (`?s=[link]`). Such url can be easily shared online.
+
+Example: https://mmaciola.github.io/thorvg.viewer.2/?s=https://raw.githubusercontent.com/Samsung/thorvg/master/src/examples/images/cartman.svg
