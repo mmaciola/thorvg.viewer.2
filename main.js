@@ -39,11 +39,36 @@ class Player {
 		return this.thorvg.load(new Int8Array(data), ext, this.canvas.width, this.canvas.height);
 	}
 	
-	loadFile(file, name) {
-		var read = new FileReader();
+	loadFile(file) {
+		let read = new FileReader();
 		read.readAsArrayBuffer(file);
 		read.onloadend = _ => {
-			if (!this.load(read.result, name) || !this.render(true)) {
+			if (!this.load(read.result, file.name) || !this.render(true)) {
+				alert("Couldn't load an image (" + file.name + "). Error message: " + this.thorvg.getError());
+				return;
+			}
+			
+			this.filename = file.name;
+			this.createTabs();
+			showImageCanvas();
+			enableZoomSlider();
+			
+			//mockupTabs();
+			//showLayers();
+		}
+	}
+	
+	loadUrl(url) {
+		let request = new XMLHttpRequest();
+		request.open('GET', url, true);
+		request.responseType = 'arraybuffer';
+		request.onloadend = _ => {
+			if (request.status !== 200) {
+				alert("Couldn't load an image from url " + url);
+				return;
+			}
+			let name = url.split('/').pop();
+			if (!this.load(request.response, name) || !this.render(true)) {
 				alert("Couldn't load an image (" + name + "). Error message: " + this.thorvg.getError());
 				return;
 			}
@@ -52,10 +77,8 @@ class Player {
 			this.createTabs();
 			showImageCanvas();
 			enableZoomSlider();
-			
-			//mockupTabs();
-			//showLayers();
-		}
+		};
+		request.send();
 	}
 	
 	createTabs() {
@@ -195,7 +218,7 @@ function fileDropOrBrowseHandle(event) {
 		return false;
 	}
 	if (!player) return false;
-	player.loadFile(files[0], files[0].name);
+	player.loadFile(files[0]);
 	return false;
 }
 
@@ -275,15 +298,8 @@ function loadFromWindowURL() {
 		return;
 	}
 	
-	let request = new XMLHttpRequest();
-    request.open('GET', imageUrl, true);
-    request.responseType = 'blob';
-    request.onload = function() {
-		if (request.status === 200) {
-			player.loadFile(request.response, imageUrl.split('/').pop());
-		}
-    };
-    request.send();
+	if (!player) return false;
+	player.loadUrl(imageUrl);
 }
 
 
