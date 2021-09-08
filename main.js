@@ -287,7 +287,6 @@ function onZoomSliderSlide(event) {
 }
 
 
-
 function loadFromWindowURL() {
 	const urlParams = new URLSearchParams(window.location.search);
 	const imageUrl = urlParams.get('s');
@@ -300,11 +299,6 @@ function loadFromWindowURL() {
 	if (!player) return false;
 	player.loadUrl(imageUrl);
 }
-
-
-
-
-
 
 
 const Types = { Shape : 1, Scene : 2, Picture : 3 };
@@ -371,7 +365,6 @@ function propertiesTabCreate(layer) {
 	var lineShowOnLayers = propertiesLineCreate("Show on layers list");
 	lineShowOnLayers.addEventListener("click", showLayers, false); // TODO
 	properties.appendChild(lineShowOnLayers);
-	//properties.appendChild(propertiesLineCreate("Show this paint only"));
 }
 
 function layerBlockCreate(depth) {
@@ -479,15 +472,6 @@ function fileHeaderCreate(text) {
 	return header;
 }
 
-
-function clearPlaceholder() {
-	var aside = document.getElementsByTagName("aside")[0];
-	var placeholders = aside.getElementsByClassName("placeholder");
-	for (let placeholder of placeholders) {
-		placeholder.classList.add("hidden");
-	}
-}
-
 function exportCanvasToTvg() {
 	player.saveTvg();
 }
@@ -511,7 +495,6 @@ function exportCanvasToPng() {
 function highlightLayer(event) {
 	var paintId = parseInt(this.getAttribute('tvg-id'));
 	player.highlightLayer(paintId);
-	
 }
 function unhighlightLayer(event) {
 	player.rerender(); // TODO; dont rerender if will do highlightLayer
