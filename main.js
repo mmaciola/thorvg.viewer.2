@@ -52,9 +52,6 @@ class Player {
 			this.createTabs();
 			showImageCanvas();
 			enableZoomSlider();
-			
-			//mockupTabs();
-			//showLayers();
 		}
 	}
 	
@@ -82,9 +79,6 @@ class Player {
 	}
 	
 	createTabs() {
-		mockupTabs();
-		showLayers();
-		
 		//layers tab
 		var layersMem = this.thorvg.layers();
 		var layers = document.getElementById("layers");
@@ -99,12 +93,14 @@ class Player {
 			if (depth > parentDepth) {
 				var block = layerBlockCreate(depth);
 				parent = parent.appendChild(block);
+				parentDepth = depth;
 			} else if (depth < parentDepth) {
-				if (parent.getAttribute('tvg-depth') > depth)
+				while (parent.getAttribute('tvg-depth') > depth) {
 					parent = parent.parentNode;
+				}
+				parentDepth = depth;
 			}
 			parent.appendChild(layerCreate(id, depth, type, compositeMethod));
-			parentDepth = depth;
 		}
 		
 		//preferences tab
@@ -128,6 +124,9 @@ class Player {
 		var lineExportPng = propertiesLineCreate("Export .png file");
 		lineExportPng.addEventListener("click", exportCanvasToPng, false);
 		file.appendChild(lineExportPng);
+
+		//switch to layers tab
+		showLayers();
 	}
 	
 	saveTvg() {
@@ -325,15 +324,31 @@ function toggleSceneChilds() {
 }
 
 function togglePaintVisibility() {
-	//todo: fix logic. visibility may be showed both in layers and preferences
 	for (var el = this.parentElement; el && !el.getAttribute('tvg-id'); el = el.parentElement);
-	var paintId = parseInt(el.getAttribute('tvg-id'));
+	var tvgId = el.getAttribute('tvg-id');
+
 	var icon = event.currentTarget.getElementsByTagName("i")[0];
 	var visible = !icon.classList.contains("fa-square-o");
-	icon.classList.toggle("fa-square-o");
-	icon.classList.toggle("fa-minus-square-o");
-	this.parentElement.setAttribute('tvg-visible', visible);
-	player.setPaintOpacity(paintId, visible ? 255 : 0);
+
+	var layers = document.getElementById("layers").getElementsByTagName("div");
+	for (var i = 0; i < layers.length; i++) {
+		if (layers[i].getAttribute('tvg-id') === tvgId) {
+			var icon = layers[i].getElementsByClassName("visibility")[0].getElementsByTagName("i")[0];
+			icon.classList.toggle("fa-square-o", visible);
+			icon.classList.toggle("fa-minus-square-o", !visible);
+			layers[i].setAttribute('tvg-visible', visible);
+			break;
+		}
+	}
+
+	var properties = document.getElementById("properties");
+	if (properties.getAttribute('tvg-id') === tvgId) {
+		var icon = properties.getElementsByClassName("visibility")[0].getElementsByTagName("i")[0];
+		icon.classList.toggle("fa-square-o", visible);
+		icon.classList.toggle("fa-minus-square-o", !visible);
+	}
+
+	player.setPaintOpacity(parseInt(tvgId), visible ? 255 : 0);
 }
 
 function showLayerProperties(event) {
@@ -372,7 +387,7 @@ function layerCreate(id, depth, type, compositeMethod) {
 	layer.setAttribute('tvg-id', id);
 	layer.setAttribute('tvg-type', type);
 	layer.setAttribute('tvg-comp', compositeMethod);
-	layer.style.paddingLeft = Math.min(48 + 16 * depth, 160) + "px";
+	layer.style.paddingLeft = Math.min(48 + 16 * depth, 224) + "px";
 
 	if (type == Types.Scene) {
 		var caret = document.createElement("a");
@@ -399,6 +414,13 @@ function layerCreate(id, depth, type, compositeMethod) {
 	if (compositeMethod != CompositeMethod.None) {
 		layer.classList.add("composite");
 		name.innerHTML += " <small>(" + CompositeMethodNames[compositeMethod] + ")</small>";
+	}
+
+	if (depth >= 11) {
+		var depthSpan = document.createElement("span");
+		depthSpan.setAttribute('class', 'depthSpan');
+		depthSpan.innerHTML = depth;
+		layer.appendChild(depthSpan);
 	}
 	
 	layer.addEventListener("mouseenter", highlightLayer, false);
@@ -494,46 +516,3 @@ function highlightLayer(event) {
 function unhighlightLayer(event) {
 	player.rerender(); // TODO; dont rerender if will do highlightLayer
 }
-
-
-
-function mockupTabs() {
-	//clear placeholders
-	clearPlaceholder();
-	//mockup layers tab
-	var layers = document.getElementById("layers");
-	layers.appendChild(layerCreate(0, Types.Scene, CompositeMethod.None));
-	var block = layerBlockCreate();
-	block.appendChild(layerCreate(1, Types.Shape, CompositeMethod.None));
-	block.appendChild(layerCreate(1, Types.Shape, CompositeMethod.ClipPath));
-	block.appendChild(layerCreate(1, Types.Scene, CompositeMethod.None));
-	var block2 = layerBlockCreate();
-	block2.appendChild(layerCreate(2, Types.Shape, CompositeMethod.None));
-	block.appendChild(block2);
-	block.appendChild(layerCreate(1, Types.Shape, CompositeMethod.AlphaMask));
-	block.appendChild(layerCreate(1, Types.Picture, CompositeMethod.None));
-	layers.appendChild(block);
-	layers.appendChild(layerCreate(0, Types.Shape, CompositeMethod.None));
-	layers.appendChild(layerCreate(0, Types.Shape, CompositeMethod.AlphaMask));
-	layers.appendChild(layerCreate(0, Types.Picture, CompositeMethod.None));
-	//mockup preferences 
-	var properties = document.getElementById("properties");
-	properties.appendChild(propertiesLayerCreate(Types.Scene, CompositeMethod.None, true));
-	properties.appendChild(propertiesLineCreate("Show on layers list"));
-	properties.appendChild(propertiesLineCreate("Show this paint only"));
-	//mockup file
-	var file = document.getElementById("file");
-	file.appendChild(fileHeaderCreate("Details"));
-	file.appendChild(titledLineCreate("Filename", "Canvas.svg"));
-	file.appendChild(titledLineCreate("Canvas size", "512 x 512"));
-	file.appendChild(fileHeaderCreate("Export"));
-	var lineExportTvg = propertiesLineCreate("Export .tvg file");
-	lineExportTvg.addEventListener("click", exportCanvasToTvg, false);
-	file.appendChild(lineExportTvg);
-	var lineExportPng = propertiesLineCreate("Export .png file");
-	lineExportPng.addEventListener("click", exportCanvasToPng, false);
-	file.appendChild(lineExportPng);
-}
-	
-
-

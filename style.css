@@ -218,6 +218,12 @@ aside > div > div.tab .hidden {
 	font-size: 20px;
 	color: #777;
 }
+.layer > .depthSpan {
+	position: absolute;
+	left: 8px;
+	line-height: 32px;
+	font-size: 11px;
+}
 .layer.composite::before {
 	content: "";
 	display: block;
